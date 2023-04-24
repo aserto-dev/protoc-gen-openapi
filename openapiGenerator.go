@@ -44,27 +44,21 @@ var specialSoloTypes = map[string]openapi3.Schema{
 	"google.protobuf.Struct": {
 		Type:       openapi3.TypeObject,
 		Properties: make(map[string]*openapi3.SchemaRef),
-		ExtensionProps: openapi3.ExtensionProps{
-			Extensions: map[string]interface{}{
-				"x-kubernetes-preserve-unknown-fields": true,
-			},
+		Extensions: map[string]interface{}{
+			"x-kubernetes-preserve-unknown-fields": true,
 		},
 	},
 	"google.protobuf.Any": {
 		Type:       openapi3.TypeObject,
 		Properties: make(map[string]*openapi3.SchemaRef),
-		ExtensionProps: openapi3.ExtensionProps{
-			Extensions: map[string]interface{}{
-				"x-kubernetes-preserve-unknown-fields": true,
-			},
+		Extensions: map[string]interface{}{
+			"x-kubernetes-preserve-unknown-fields": true,
 		},
 	},
 	"google.protobuf.Value": {
 		Properties: make(map[string]*openapi3.SchemaRef),
-		ExtensionProps: openapi3.ExtensionProps{
-			Extensions: map[string]interface{}{
-				"x-kubernetes-preserve-unknown-fields": true,
-			},
+		Extensions: map[string]interface{}{
+			"x-kubernetes-preserve-unknown-fields": true,
 		},
 	},
 	"google.protobuf.BoolValue":   *openapi3.NewBoolSchema().WithNullable(),
@@ -132,9 +126,9 @@ func newOpenAPIGenerator(
 
 // buildCustomSchemasByMessageName name returns a mapping of message name to a pre-defined openapi schema
 // It includes:
-//	1. `specialSoloTypes`, a set of pre-defined schemas
+//  1. `specialSoloTypes`, a set of pre-defined schemas
 //  2. `messagesWithEmptySchema`, a list of messages that are injected at runtime that should contain
-//  and empty schema which accepts and preserves all fields
+//     and empty schema which accepts and preserves all fields
 func buildCustomSchemasByMessageName(messagesWithEmptySchema []string) map[string]openapi3.Schema {
 	schemasByMessageName := make(map[string]openapi3.Schema)
 
@@ -148,10 +142,8 @@ func buildCustomSchemasByMessageName(messagesWithEmptySchema []string) map[strin
 		emptyMessage := openapi3.Schema{
 			Type:       openapi3.TypeObject,
 			Properties: make(map[string]*openapi3.SchemaRef),
-			ExtensionProps: openapi3.ExtensionProps{
-				Extensions: map[string]interface{}{
-					"x-kubernetes-preserve-unknown-fields": true,
-				},
+			Extensions: map[string]interface{}{
+				"x-kubernetes-preserve-unknown-fields": true,
 			},
 		}
 		schemasByMessageName[messageName] = emptyMessage
@@ -161,7 +153,9 @@ func buildCustomSchemasByMessageName(messagesWithEmptySchema []string) map[strin
 }
 
 func (g *openapiGenerator) generateOutput(filesToGen map[*protomodel.FileDescriptor]bool) (*plugin.CodeGeneratorResponse, error) {
-	response := plugin.CodeGeneratorResponse{}
+	response := plugin.CodeGeneratorResponse{
+		SupportedFeatures: proto.Uint64(uint64(plugin.CodeGeneratorResponse_FEATURE_PROTO3_OPTIONAL)),
+	}
 
 	if g.singleFile {
 		g.generateSingleFileOutput(filesToGen, &response)
@@ -324,12 +318,12 @@ func (g *openapiGenerator) generateFile(name string,
 	c.Schemas = allSchemas
 	// add the openapi object required by the spec.
 	o := openapi3.T{
-		OpenAPI: "3.0.1",
+		OpenAPI: "3.0.3",
 		Info: &openapi3.Info{
 			Title:   description,
 			Version: version,
 		},
-		Components: c,
+		Components: &c,
 	}
 
 	g.buffer.Reset()
@@ -371,10 +365,8 @@ func (g *openapiGenerator) generateSoloMessageSchema(message *protomodel.Message
 
 func (g *openapiGenerator) generateSoloInt64Schema() *openapi3.Schema {
 	schema := openapi3.NewInt64Schema()
-	schema.ExtensionProps = openapi3.ExtensionProps{
-		Extensions: map[string]interface{}{
-			"x-kubernetes-int-or-string": true,
-		},
+	schema.Extensions = map[string]interface{}{
+		"x-kubernetes-int-or-string": true,
 	}
 
 	return schema
@@ -420,11 +412,10 @@ func (g *openapiGenerator) generateEnumSchema(enum *protomodel.EnumDescriptor) *
 
 	// If the schema should be int or string, mark it as such
 	if g.enumAsIntOrString {
-		o.ExtensionProps = openapi3.ExtensionProps{
-			Extensions: map[string]interface{}{
-				"x-kubernetes-int-or-string": true,
-			},
+		o.Extensions = map[string]interface{}{
+			"x-kubernetes-int-or-string": true,
 		}
+
 		return o
 	}
 
@@ -497,7 +488,7 @@ func (g *openapiGenerator) fieldType(field *protomodel.FieldDescriptor) *openapi
 				schema = openapi3.NewObjectSchema()
 				// in `$ref`, the value of the schema is not in the output.
 				sr.Value = nil
-				schema.AdditionalProperties = sr
+				schema.AdditionalProperties.Schema = sr
 			} else {
 				schema = openapi3.NewObjectSchema().WithAdditionalProperties(sr.Value)
 			}
