@@ -72,3 +72,7 @@ message MessageOneOf {
     }
 
 }
+
+message MessageWithOptional {
+    optional string name = 1;
+}
